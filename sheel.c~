@@ -1,104 +1,142 @@
-#include <stdio.h> 
-#include <stdlib.h>      
-#include <sys/types.h>
-#include <pwd.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdbool.h>
-
-#include <fcntl.h>
-
-#define BUFFER_SIZE 1000
+/* ------------------------------------------
+ * Project: Unix interpreter
+ * Authors: Rejas C. & Poroli F.
+ * Version: 1.0, 2016-01-04
+ * ------------------------------------------*/
 
 
-void write_HOME (int fd_profile, char *str_home) {
-
-	const char HOME[] ="HOME=";
-	str_home = strcat(str_home,"\n");
-
-	if (write(fd_profile, HOME, strlen(HOME)) != strlen(HOME)) {
-		printf("erreur : écriture du HOME dans profile\n");
-    }
-
-	if (write(fd_profile, str_home, strlen(str_home)) != strlen(str_home)) {
-		printf("erreur : écriture du HOME dans profile\n");
-    }
-
-
-}
-
-
-void write_PATH (int fd_profile) {
-
-	const char str_path[] = "PATH=/bin:/usr/bin:/usr/local/bin\n";
-
-	if (write(fd_profile, str_path, strlen(str_path)) != strlen(str_path)) {
-		printf("erreur : écriture du PATH dans profile\n");
-    }
-
-}
+#include "sheel.h"
 
 
 
-
+/**
+ *	@brief Function to read and configure the profile file and setenv PUTH and HOME 
+ *	@param --
+ *	@return const int ...
+ */
 void read_profile_file () {
+
+	#define BUFFER_STR 128
 
 	bool creat_HOME = true;
 	bool creat_PATH = true;
 
-	char str[128];
-
-
-
+	char buffer_str[BUFFER_STR];
 	char *token;
-
-	//char *str_home;
 
 	struct passwd *p = getpwuid(getuid());
 
 	char str_home[strlen(p->pw_dir)];
-
 	strcpy(str_home,p->pw_dir);
 
 
 	int fd_profile = open(strcat(p->pw_dir,"/profile"), O_RDWR | O_CREAT, S_IRWXU);
+		// Open the file profile, Read&Write, if is onexcisting creat it.
 
 	if (fd_profile < 0) {
 		printf("erreur sur l'ouverture du fichier profile");
+		// peut etre utiliser errno !!!!
     }
 
-	read(fd_profile, str, 127);
+	read(fd_profile, buffer_str, BUFFER_STR);
 
-	token = strtok(str,"\n");
-	if (token == NULL) {
+	token = strtok(buffer_str,"\n");	// find PATH or HOME in the file profile
 
-		printf("creer les deux machin ... ");
-	}
-	else {
+	while (token != NULL) {
 
-		while (token != NULL) {
-
-			if (strstr(token,"PATH") != NULL) {
-				creat_PATH = false;
-			}
-			else if (strstr(token,"HOME") != NULL) {
-				creat_HOME = false;
-			}
-
-			printf("  %s\n", token );
-			token = strtok(NULL, "\n");
+		if (strstr(token,"PATH") != NULL) {
+			creat_PATH = false;	// if PATH find do not creat a line PATH
+			// ajouter ici pour le setenv !!
+		}
+		else if (strstr(token,"HOME") != NULL) {
+			creat_HOME = false; // if HOME find do not creat a line HOME
+			// ajouter ici pour le setenv !!
 		}
 
+		printf("  %s\n", token );
+		token = strtok(NULL, "\n");
 	}
 
-	if (creat_HOME == true) 
-		write_HOME(fd_profile, str_home);
+	if (creat_HOME == true)
+		write_on_file(fd_profile, creat_str_home(str_home));
 
-	if (creat_PATH == true) 
-		write_PATH (fd_profile);
-	
+	if (creat_PATH == true)
+		write_on_file(fd_profile, creat_str_path());
+
+}
 
 
+void write_on_file(int fd_file, const char* str) {
+
+	if (write(fd_file, str, strlen(str)) != strlen(str)) {
+		printf("erreur : écriture dans le fichier\n");
+    }
+
+}
+
+char* creat_str_home(const char* pw_dir) {
+
+	const char HOME[] = "HOME=";
+
+	size_t len1 = strlen(pw_dir);
+	size_t len2 = strlen(HOME);
+	char* home = malloc(sizeof(char) *(len1 + len2 + 1));
+
+	strcpy(home, HOME);
+	strcat(home, pw_dir);
+	strcat(home, "\n");
+
+	return home;
+}
+
+char* creat_str_path() {
+
+	char* str_path = malloc(sizeof(char) *strlen("PATH=/bin:/usr/bin:/usr/local/bin\n"));
+	strcpy(str_path, "PATH=/bin:/usr/bin:/usr/local/bin\n");
+	return str_path;
+
+}
+
+
+
+void add_env(char* name_value) {
+
+	char* test = malloc(sizeof(char) *20);
+
+	char* name;
+	char* value;
+	char* token;
+
+
+	name = strtok(name_value, "=");
+	value = strtok(NULL,"=");
+
+	if (setenv(name, value, 1) == 0)
+		printf("succes add env\n");
+
+}
+
+char* read_env(char* name) {
+
+	remove_cr(name);
+	remove_char(name, '$');
+
+	printf("read env : %s=%s",name, getenv(name));
+
+	return getenv(name);
+
+}
+
+
+
+void remove_char(char *str, char char_remove) {
+
+    char *src, *dst;
+    for (src = dst = str; *src != '\0'; src++) {
+        *dst = *src;
+        if (*dst != char_remove) dst++;
+    }
+    *dst = '\0';
 }
 
 
@@ -106,52 +144,86 @@ void read_profile_file () {
 
 
 
-void main()
-{
-	int test = 0;
-
-	char* input = malloc(sizeof(char) * BUFFER_SIZE);
-
-	//char *putenv
-
-	read_profile_file();
 
 
-	printf("Hello world\n");
-
-	while(true) {
-		fgets(input, BUFFER_SIZE, stdin); // Read the input command
-
-		printf("%d : \n",strlen(input));
 
 
-			if (strrchr(input,'=') != NULL) {
-
-				//printf("le fatal test :%d et  %s",strlen(input),input);
-				//printf("le fatal2 test2 :%d et  %s",strlen("A=10"),"A=10");
-
-				if (putenv("A=50") == 0)
-					printf("succes put env\n");
-				
-			//	if (putenv(input) == 0)
-				//	printf("succes put env\n");
-
-			}
-			else if (strrchr(input,'$') != NULL) {
 
 
-			//	printf("le testtt : %s", strtok(input,"$"));
-			//	printf("get env : %s \n", getenv(strtok(input,"$"))); // sa ne marche pas !
-				printf("get env : %s \n", getenv("A")); // sa ne marche pas !
-			}
-		
-	
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @brief Function to remove the carriage return value on a string
+ * @param char* str - String value
+ */
+void remove_cr(char* str) {
+	size_t last = strlen(str) - 1;
+	if (str[last] == '\n') str[last] = '\0'; // To remove the '\n'
+}
+
+
+
+
+const int strindxof(const char* str, const char* c) {
+	bool found = false;
+	int i = 0;
+	size_t len = strlen(str);
+
+	for(i = 0; i < len; i++) {
+		if(str[i] == *c) {
+			found = true;
+			break;
+		}
 	}
 
-
-	
-
-
-
+	return found ? i : -1; // -1 means the character wasn't found
 }
+
+
+
+
+char* parse_value(const char* str, const char* delim) {
+	const int delim_index = strindxof(str, delim);
+	char* cpy_str = malloc(sizeof(char) * 1000);
+
+	strcpy(cpy_str, str);
+	for(int i = 0; i <= delim_index; i++, cpy_str++);
+
+	return cpy_str;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

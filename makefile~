@@ -1,0 +1,16 @@
+CFLAGS = -std=gnu99 -Wall
+CC = gcc $(CFLAGS)
+OUTPUT = unix
+
+
+all: $(OUTPUT)
+
+$(OUTPUT): sheel.o
+	$(CC) -o $(OUTPUT) sheel.o
+
+sheel.o: sheel.c
+	$(CC) -c sheel.c
+
+clean:
+	rm -f *.o $(OUTPUT)
+	echo Clean done
