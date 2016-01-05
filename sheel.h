@@ -16,27 +16,26 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+#include <errno.h>
 
 
 void read_profile_file ();
-
 void write_on_file(int fd_file, const char* str);
 char* creat_str_home(const char* pw_dir);
 char* creat_str_path();
 
-
-void add_env(char* name_value);
+int add_env(char* name_value);
 char* read_env(char* name);
-void remove_char(char *str, char char_remove);
 
+int cd(char* directory);
+char* pwd();
 
+void remove_char(char* str, char char_remove);
 
 
 void remove_cr(char* str);
-
-const int strindxof(const char* str, const char* c);
-char* parse_value(const char* str, const char* delim);
-
+char** strxpld(char* str, const char* delim);
+const int count_delim(const char* str, const char* c);
 
 
 #endif

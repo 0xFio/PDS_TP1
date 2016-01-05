@@ -18,31 +18,44 @@ int main(int argc, char** argv) {
 
 	char* input = malloc(sizeof(char) * BUFFER_SIZE);
 
+	char** args = malloc(sizeof(char*) * 100);
+
 	read_profile_file();
 
 
 	printf("Hello world\n");
 
 
+	while(true) { //true
 
-	while(true) { // true
+
 		fgets(input, BUFFER_SIZE, stdin); // Read the input command
+		remove_cr(input);
 
-		//printf("%d : \n",strlen(input));
+		if (strchr(input,'=') != NULL) {
 
+			add_env(input);
+		}
+		else if (strncmp(input, "$", 1) == 0) {
 
-			if (strrchr(input,'=') != NULL) {
+			printf("  %s \n", read_env(input));
+		}
+		else if (strcmp(input, "pwd") == 0) {
 
-				add_env(input);
+			printf("  pwd = %s \n", pwd());
+		}
+		else if (strncmp(input, "cd", 2) == 0) {
 
-			}
-			else if (strrchr(input,'$') != NULL) {
+			args = strxpld(input, " ");
+			cd(args[1]);
+		}
+		else if (strncmp(input, "alias", 5) == 0) {
 
+		}
+		else if (strcmp(input, "exit") == 0) {
 
-				printf("resultat de read_env : %s", read_env(input));
-
-			}
-
+			break;
+		}
 	}
 
 	return EXIT_SUCCESS;
