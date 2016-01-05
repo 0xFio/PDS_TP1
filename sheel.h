@@ -20,17 +20,17 @@
 
 
 void read_profile_file ();
-void write_on_file(int fd_file, const char* str);
+void write_on_file(const int fd_file, const char* str);
 char* creat_str_home(const char* pw_dir);
 char* creat_str_path();
 
 int add_env(char* name_value);
 char* read_env(char* name);
 
-int cd(char* directory);
+int cd(const char* directory);
 char* pwd();
 
-void remove_char(char* str, char char_remove);
+void remove_char(char* str, const char char_remove);
 
 
 void remove_cr(char* str);

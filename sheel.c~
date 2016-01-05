@@ -7,8 +7,6 @@
 
 #include "sheel.h"
 
-
-
 /**
  *	@brief Function to read and configure the profile file and setenv PUTH and HOME 
  *	@param --
@@ -40,6 +38,8 @@ void read_profile_file () {
 	if (fd_profile < 0) {
 		perror("Erreur ");
     }
+
+	// -------------------------scanf
 
 	read(fd_profile, buffer_str, BUFFER_STR); // ----------il faut faire pour controler la fin du fichier ----------------------------------------------------------------------------------------------------------------------
 
@@ -76,13 +76,26 @@ void read_profile_file () {
 }
 
 
-void write_on_file(int fd_file, const char* str) {
+
+/**
+ *	@brief Function write a string on file
+ *	@param const int fd_file - file descritpor
+ *	@param const char* str - String value
+ *	@return ..............................................................
+ */
+void write_on_file(const int fd_file, const char* str) {
 
 	if (write(fd_file, str, strlen(str)) != strlen(str)) {
 		printf("erreur : écriture dans le fichier\n");
     }
 }
 
+
+/**
+ *	@brief Function to creat a string for HOME ............
+ *	@param const char* pw_dir - home directory
+ *	@return string value - HOME
+ */
 char* creat_str_home(const char* pw_dir) {
 
 	const char HOME[] = "HOME=";
@@ -98,6 +111,10 @@ char* creat_str_home(const char* pw_dir) {
 	return home;
 }
 
+/**
+ *	@brief Function to creat a string PATH
+ *	@return string value - PATH
+ */
 char* creat_str_path() {
 
 	char* str_path = malloc(sizeof(char) *strlen("PATH=/bin:/usr/bin:/usr/local/bin\n"));
@@ -106,7 +123,11 @@ char* creat_str_path() {
 }
 
 
-
+/**
+ *	@brief Function to change or add an environment variable
+ *	@param char* name_value - syntex : "NAME=VALUE" ------------ verifier si const !!
+ *	@return integer value - errno for setenv
+ */
 int add_env(char* name_value) {
 
 	char* name;
@@ -115,13 +136,19 @@ int add_env(char* name_value) {
 	errno = 0;
 
 	name = strtok(name_value, "=");
-	value = strtok(NULL,"=");
+	value = strtok(NULL, "="); // ----------- faire en sorte de lire après le = et tout
 
 	if (setenv(name, value, 1) < 0) //overwrite = 1
 		perror("Erreur ");
 	return errno;
 }
 
+
+/**
+ *	@brief Function to read an environment variable
+ *	@param char* name - ------------------------------------ verfier si const !!
+ *	@return integer value - errno for setenv
+ */
 char* read_env(char* name) {
 
 	remove_cr(name);
@@ -132,8 +159,13 @@ char* read_env(char* name) {
 }
 
 
-
-void remove_char(char *str, char char_remove) {
+/**
+ *	@brief Function to remove a char
+ *	@param char* str - string to remove a char
+ *	@param const char char_remove - char to remove
+ *	@return -----------------------------------------------------------------------
+ */
+void remove_char(char* str, const char char_remove) {
 
     char *src, *dst;
     for (src = dst = str; *src != '\0'; src++) {
@@ -145,8 +177,12 @@ void remove_char(char *str, char char_remove) {
 
 
 
-
-int cd(char* directory)  {
+/**
+ *	@brief Function to change directoy
+ *	@param char* directory - string to change directory (example : /tmp)
+ *	@return integer value - errno for chdir
+ */
+int cd(const char* directory)  {
 
 	errno = 0;
 
@@ -156,7 +192,10 @@ int cd(char* directory)  {
 }
 
 
-
+/**
+ *	@brief Function to return the current working directory
+ *	@return string value - the current working directory
+ */
 char* pwd() {
 
 	long size;
@@ -174,12 +213,17 @@ char* pwd() {
 
 
 
+/*
 
 
+0xFio: TP1 $:B=40
+0xFio: TP1 $:A=30 echo $B
+40
 
+Tu as vu mongole ... tu sais meme pas écrire mongole ... enfin je sais pas ...
+tu dois exploser avec les éspace ensuite tu traite le premier et etc jusqu'à la fin des espaces !!
 
-
-
+*/
 
 
 
@@ -203,9 +247,6 @@ void remove_cr(char* str) {
 	size_t last = strlen(str) - 1;
 	if (str[last] == '\n') str[last] = '\0'; // To remove the '\n'
 }
-
-
-
 
 
 
