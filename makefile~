@@ -5,11 +5,14 @@ OUTPUT = unix
 
 all: $(OUTPUT)
 
-$(OUTPUT): sheel.o
-	$(CC) -o $(OUTPUT) sheel.o
+$(OUTPUT): main.o shell.o
+	$(CC) -o $(OUTPUT) main.o shell.o
 
-sheel.o: sheel.c
-	$(CC) -c sheel.c
+main.o: main.c sheel.o
+	$(CC) -c main.c
+
+shell.o:
+	$(CC) -c shell.c
 
 clean:
 	rm -f *.o $(OUTPUT)

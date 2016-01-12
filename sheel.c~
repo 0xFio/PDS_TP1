@@ -14,7 +14,7 @@
  */
 void read_profile_file () {
 
-	#define BUFFER_STR 128
+	const int BUFFER_STR = 128;
 
 	bool creat_HOME = true;
 	bool creat_PATH = true;
@@ -39,7 +39,6 @@ void read_profile_file () {
 		perror("Erreur ");
     }
 
-	// -------------------------scanf
 
 	read(fd_profile, buffer_str, BUFFER_STR); // ----------il faut faire pour controler la fin du fichier ----------------------------------------------------------------------------------------------------------------------
 
@@ -81,18 +80,20 @@ void read_profile_file () {
  *	@brief Function write a string on file
  *	@param const int fd_file - file descritpor
  *	@param const char* str - String value
- *	@return ..............................................................
+ *	@return integer value - 0= no error / -1 = error
  */
-void write_on_file(const int fd_file, const char* str) {
+int write_on_file(const int fd_file, const char* str) {
 
 	if (write(fd_file, str, strlen(str)) != strlen(str)) {
 		printf("erreur : écriture dans le fichier\n");
+		return -1;
     }
+	return 0;
 }
 
 
 /**
- *	@brief Function to creat a string for HOME ............
+ *	@brief Function to creat a string for HOME directory
  *	@param const char* pw_dir - home directory
  *	@return string value - HOME
  */
@@ -125,37 +126,44 @@ char* creat_str_path() {
 
 /**
  *	@brief Function to change or add an environment variable
- *	@param char* name_value - syntex : "NAME=VALUE" ------------ verifier si const !!
+ *	@param const char* name_value - syntax : "NAME=VALUE"
  *	@return integer value - errno for setenv
  */
-int add_env(char* name_value) {
+int add_env(const char* name_value) {
+
+	char cpy_name_value[strlen(name_value)];
+	strcpy(cpy_name_value, name_value);
 
 	char* name;
 	char* value;
 
 	errno = 0;
 
-	name = strtok(name_value, "=");
-	value = strtok(NULL, "="); // ----------- faire en sorte de lire après le = et tout
+	name = strtok(cpy_name_value, "=");
+	value = strtok(NULL, "");
 
 	if (setenv(name, value, 1) < 0) //overwrite = 1
 		perror("Erreur ");
+
 	return errno;
 }
 
 
 /**
  *	@brief Function to read an environment variable
- *	@param char* name - ------------------------------------ verfier si const !!
+ *	@param const char* name - name for return value
  *	@return integer value - errno for setenv
  */
-char* read_env(char* name) {
+char* read_env(const char* name) {
 
-	remove_cr(name);
-	remove_char(name, '$');
+	char cpy_name[strlen(name)];
+	strcpy(cpy_name, name);
+
+	remove_cr(cpy_name);
+	remove_char(cpy_name, '$');
 
 	// printf("read env : %s=%s",name, getenv(name));
-	return getenv(name);
+	return getenv(cpy_name);
 }
 
 
@@ -163,7 +171,6 @@ char* read_env(char* name) {
  *	@brief Function to remove a char
  *	@param char* str - string to remove a char
  *	@param const char char_remove - char to remove
- *	@return -----------------------------------------------------------------------
  */
 void remove_char(char* str, const char char_remove) {
 
@@ -212,33 +219,6 @@ char* pwd() {
 
 
 
-
-/*
-
-
-0xFio: TP1 $:B=40
-0xFio: TP1 $:A=30 echo $B
-40
-
-Tu as vu mongole ... tu sais meme pas écrire mongole ... enfin je sais pas ...
-tu dois exploser avec les éspace ensuite tu traite le premier et etc jusqu'à la fin des espaces !!
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * @brief Function to remove the carriage return value on a string
  * @param char* str - String value
@@ -247,7 +227,6 @@ void remove_cr(char* str) {
 	size_t last = strlen(str) - 1;
 	if (str[last] == '\n') str[last] = '\0'; // To remove the '\n'
 }
-
 
 
 
@@ -294,12 +273,90 @@ const int count_delim(const char* str, const char* c) {
 
 
 
+/**
+ * @brief Function to add_alias
+ * @param structure alias_t - all alias
+ * @param const char* name_value - syntax : "NAME=VALUE"
+ */
+void add_alias(alias_t* alias, const char* name_value) {
+
+	char cpy_name_value[strlen(name_value)];
+	strcpy(cpy_name_value, name_value);
+
+	char* tmp_name;
+	char* tmp_value;
+
+	tmp_name = strtok(cpy_name_value, "=");
+	tmp_value = strtok(NULL, "");
+
+	char *name = malloc(sizeof(char) * strlen(tmp_name));
+	char *value = malloc(sizeof(char) * strlen(tmp_value));
+
+	strcpy(name, tmp_name);
+	strcpy(value, tmp_value);
+
+	int num_alias = find_alias_value(alias, name);
+
+	if (num_alias == -1) { // alias pas existant
+		if (nbr_alias < MAX_ALIAS) {
+			alias[nbr_alias].name = name;
+			alias[nbr_alias].value = value;
+			nbr_alias ++;	// global variable
+		}
+		else
+			printf("erreur trop d'alias ajouter ! \n");
+	}
+	else {
+		alias[num_alias].value = value;
+	}
+}
+
+
+/**
+ * @brief Function to view_all_alias
+ * @param structure alias_t - all alias
+ */
+void view_all_alias(alias_t* alias) {
+
+	for (int i=0 ; i!=nbr_alias ; i++) {
+		printf("  %s='%s'\n", alias[i].name, alias[i].value);
+	}
+}
+
+
+/**
+ * @brief Function to view_all_alias
+ * @param structure alias_t - all alias
+ * @param const char* name - name of alias
+ */
+void view_alias(alias_t* alias, const char* name) {
+
+	int num_alias = 0;
+
+	num_alias = find_alias_value(alias, name);
+
+	if (num_alias != -1)
+		printf("  %s='%s'\n", alias[num_alias].name, alias[num_alias].value);
+	else 
+		printf("alias : %s : non trouvé\n", name);
+}
 
 
 
+/**
+ * @brief Function to find_alias_value
+ * @param structure alias_t - all alias
+ * @param const char* name - name of alias
+ * @return Integer value - number of alias
+ */
+int find_alias_value(alias_t* alias, const char* name) {
 
-
-
-
+	for (int i=0 ; i!=nbr_alias ; i++) {
+		if (strcmp(alias[i].name, name) == 0) {
+			return i;
+		}
+	}
+	return -1;
+}
 
 
